@@ -61,7 +61,9 @@ services:
       minio:
         condition: service_healthy
     command: >
-      uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
     ports:
       - "8000:8000"
 
@@ -73,6 +75,8 @@ services:
     depends_on:
       - backend
       - redis
+    volumes:
+      - ./backend:/app
     command: >
       celery -A app.workers.celery_app worker -Q image -n image@%h --concurrency=4 -l info
 
@@ -84,6 +88,8 @@ services:
     depends_on:
       - backend
       - redis
+    volumes:
+      - ./backend:/app
     command: >
       celery -A app.workers.celery_app worker -Q video -n video@%h --concurrency=2 -l info
 

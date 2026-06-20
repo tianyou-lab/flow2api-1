@@ -17,6 +17,7 @@ from app.schemas.generation import (
     VideoGenerateRequest,
 )
 from app.services import quota
+from app.workers.celery_app import celery_app  # noqa: F401  确保 Celery 应用(redis broker)被实例化为 current_app
 from app.workers.tasks import generate_image, generate_video
 
 router = APIRouter(prefix="/generate", tags=["generation"])
