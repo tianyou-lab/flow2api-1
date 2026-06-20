@@ -40,10 +40,23 @@
 
 模型列表统一由 `/api/v1/generate/models` 和 OpenAI 兼容 `/v1/models` 输出。
 
-当前模型：
+图片模型：
 
-- 图片：`nano_banana`、`banana_pro`、`imagen`、`imagen_4k`。
-- 视频：`omni_flash`、`veo_3_1_fast`、`veo_3_1_lite`、`veo_3_1_quality`。
+| 模型 ID | 显示名 | Flow 协议映射 | 支持账号 |
+|---|---|---|---|
+| `nano_banana` | Nano Banana | `NARWHAL` | `normal` / `pro` / `ula` |
+| `banana_pro` | Banana Pro | `GEM_PIX_2` | `pro` / `ula` |
+| `imagen` | Imagen | `IMAGEN_3_5` | `pro` / `ula` |
+| `imagen_4k` | Imagen 4K | `IMAGEN_3_5` | `ula` |
+
+视频模型：
+
+| 模型 ID | 显示名 | Flow 协议映射 | 支持账号 |
+|---|---|---|---|
+| `omni_flash` | OMNI Flash | `abra_t2v_10s` | `normal` / `pro` / `ula` |
+| `veo_3_1_lite` | Veo 3.1 Lite | `veo_3_1_t2v_lite_landscape` | `normal` / `pro` / `ula` |
+| `veo_3_1_fast` | Veo 3.1 Fast | `veo_3_1_t2v_fast_landscape` | `pro` / `ula` |
+| `veo_3_1_quality` | Veo 3.1 Quality | `veo_3_1_t2v_landscape` | `pro` / `ula` |
 
 模型权限由账号类型控制。`imagen_4k` 只允许 ULA 账号执行。
 
