@@ -26,6 +26,8 @@ export default function AccountsPage() {
   const [editForm, setEditForm] = useState({
     label: "",
     email: "",
+    login_password: "",
+    mail_api_url: "",
     project_id: "",
     session_token: "",
     google_cookies: "",
@@ -39,6 +41,8 @@ export default function AccountsPage() {
   const [form, setForm] = useState({
     label: "",
     email: "",
+    login_password: "",
+    mail_api_url: "",
     project_id: "",
     session_token: "",
     google_cookies: "",
@@ -70,6 +74,8 @@ export default function AccountsPage() {
       setForm({
         label: "",
         email: "",
+        login_password: "",
+        mail_api_url: "",
         project_id: "",
         session_token: "",
         google_cookies: "",
@@ -90,15 +96,21 @@ export default function AccountsPage() {
 
   async function batchImport() {
     try {
-      const parsed = JSON.parse(importText);
-      const accountsPayload = Array.isArray(parsed) ? parsed : parsed.accounts;
-      if (!Array.isArray(accountsPayload)) {
-        toast.warn("请输入账号数组或 { accounts: [...] }");
-        return;
+      let body: unknown;
+      try {
+        const parsed = JSON.parse(importText);
+        const accountsPayload = Array.isArray(parsed) ? parsed : parsed.accounts;
+        if (!Array.isArray(accountsPayload)) {
+          toast.warn("JSON 请输入账号数组或 { accounts: [...] }");
+          return;
+        }
+        body = { accounts: accountsPayload };
+      } catch {
+        body = { raw_text: importText };
       }
       const res = await api<{ created: number; skipped: number; errors: string[] }>(
         "/admin/accounts/import",
-        { method: "POST", body: JSON.stringify({ accounts: accountsPayload }) }
+        { method: "POST", body: JSON.stringify(body) }
       );
       toast.success(`导入完成: 新增 ${res.created}, 跳过 ${res.skipped}`);
       if (res.errors.length) toast.warn(res.errors[0]);
@@ -133,6 +145,8 @@ export default function AccountsPage() {
     setEditForm({
       label: a.label,
       email: a.email || "",
+      login_password: "",
+      mail_api_url: "",
       project_id: a.project_id || "",
       session_token: "",
       google_cookies: "",
@@ -151,6 +165,8 @@ export default function AccountsPage() {
     const payload = {
       ...editForm,
       email: editForm.email || null,
+      login_password: editForm.login_password || undefined,
+      mail_api_url: editForm.mail_api_url || undefined,
       project_id: editForm.project_id || null,
       proxy: editForm.proxy || null,
       cookies_expires_at: editForm.cookies_expires_at || null,
@@ -230,7 +246,7 @@ export default function AccountsPage() {
               className="input min-h-[160px] resize-none font-mono text-xs"
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
-              placeholder='[{"label":"acc1","session_token":"...","project_id":"...","account_type":"pro","proxy":"...","google_cookies":"..."}]'
+              placeholder={'支持 JSON,也支持每行: 邮箱----密码----收信接口URL\nexample@outlook.com----password----https://api.example.com/mail?...'}
             />
           </div>
           <div className="flex justify-end gap-2">
@@ -259,6 +275,26 @@ export default function AccountsPage() {
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="user@gmail.com"
+              />
+            </div>
+          </div>
+          <div className="grid gap-3.5 sm:grid-cols-2">
+            <div>
+              <label className="label">邮箱密码(可选)</label>
+              <input
+                className="input"
+                value={form.login_password}
+                onChange={(e) => setForm({ ...form, login_password: e.target.value })}
+                placeholder="导入邮箱账号时使用"
+              />
+            </div>
+            <div>
+              <label className="label">收信接口 URL(可选)</label>
+              <input
+                className="input font-mono text-xs"
+                value={form.mail_api_url}
+                onChange={(e) => setForm({ ...form, mail_api_url: e.target.value })}
+                placeholder="https://api.../mail-new?refresh_token=..."
               />
             </div>
           </div>
@@ -385,6 +421,16 @@ export default function AccountsPage() {
               <input className="input" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
             </div>
           </div>
+          <div className="grid gap-3.5 sm:grid-cols-2">
+            <div>
+              <label className="label">邮箱密码(留空不覆盖)</label>
+              <input className="input" value={editForm.login_password} onChange={(e) => setEditForm({ ...editForm, login_password: e.target.value })} />
+            </div>
+            <div>
+              <label className="label">收信接口 URL(留空不覆盖)</label>
+              <input className="input font-mono text-xs" value={editForm.mail_api_url} onChange={(e) => setEditForm({ ...editForm, mail_api_url: e.target.value })} />
+            </div>
+          </div>
           <div>
             <label className="label">Project ID</label>
             <input className="input font-mono" value={editForm.project_id} onChange={(e) => setEditForm({ ...editForm, project_id: e.target.value })} />
@@ -490,6 +536,11 @@ export default function AccountsPage() {
                 <td className="px-4 py-2.5">
                   <div className="text-white">{a.label}</div>
                   <div className="text-xs text-slate-500">{a.email || a.chrome_profile}</div>
+                  {(a.has_login_password || a.has_mail_api_url) && (
+                    <div className="mt-1 text-[10px] text-slate-500">
+                      {a.has_login_password ? "邮箱密码" : ""}{a.has_login_password && a.has_mail_api_url ? " / " : ""}{a.has_mail_api_url ? "收信接口" : ""}
+                    </div>
+                  )}
                 </td>
                 <td className="px-4 py-2.5">
                   <span className={cn("badge", STATUS_STYLE[a.status])}>

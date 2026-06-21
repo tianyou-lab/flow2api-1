@@ -59,6 +59,8 @@ export interface FlowAccount {
   id: number;
   label: string;
   email: string | null;
+  has_login_password: boolean;
+  has_mail_api_url: boolean;
   chrome_profile: string;
   project_id: string | null;
   proxy: string | null;

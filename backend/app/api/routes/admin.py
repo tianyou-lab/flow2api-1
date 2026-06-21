@@ -75,6 +75,33 @@ def _cookie_expiry(text: str | None) -> datetime | None:
     return min(expiries) if expiries else None
 
 
+def _parse_mail_import(raw_text: str | None) -> list[FlowAccountCreate]:
+    rows: list[FlowAccountCreate] = []
+    if not raw_text:
+        return rows
+    for line_no, line in enumerate(raw_text.splitlines(), start=1):
+        text = line.strip()
+        if not text:
+            continue
+        parts = text.split("----", 2)
+        if len(parts) != 3:
+            raise HTTPException(400, f"第 {line_no} 行格式错误,应为 邮箱----密码----收信接口URL")
+        email, password, mail_api_url = [p.strip() for p in parts]
+        if not email or not password or not mail_api_url:
+            raise HTTPException(400, f"第 {line_no} 行缺少邮箱、密码或收信接口URL")
+        label = email.split("@", 1)[0] or email
+        rows.append(
+            FlowAccountCreate(
+                label=label,
+                email=email,
+                login_password=password,
+                mail_api_url=mail_api_url,
+                status=AccountStatus.disabled,
+            )
+        )
+    return rows
+
+
 @router.post("/accounts", response_model=FlowAccountOut, status_code=201)
 async def create_account(payload: FlowAccountCreate, db: AsyncSession = Depends(get_db)):
     data = payload.model_dump()
@@ -82,6 +109,8 @@ async def create_account(payload: FlowAccountCreate, db: AsyncSession = Depends(
         data["chrome_profile"] = _slug(data["label"])
     if not data.get("cookies_expires_at"):
         data["cookies_expires_at"] = _cookie_expiry(data.get("google_cookies"))
+    if not data.get("session_token") or not data.get("project_id"):
+        data["status"] = AccountStatus.disabled
     account = FlowAccount(**data)
     db.add(account)
     await db.flush()
@@ -94,12 +123,18 @@ async def import_accounts(payload: FlowAccountBatchImport, db: AsyncSession = De
     created = 0
     skipped = 0
     errors: list[str] = []
-    for idx, item in enumerate(payload.accounts, start=1):
+    import_items = list(payload.accounts or [])
+    import_items.extend(_parse_mail_import(payload.raw_text))
+    if not import_items:
+        raise HTTPException(400, "没有可导入的账号")
+    for idx, item in enumerate(import_items, start=1):
         data = item.model_dump()
         if not data.get("chrome_profile"):
             data["chrome_profile"] = _slug(data["label"])
         if not data.get("cookies_expires_at"):
             data["cookies_expires_at"] = _cookie_expiry(data.get("google_cookies"))
+        if not data.get("session_token") or not data.get("project_id"):
+            data["status"] = AccountStatus.disabled
         exists_stmt = select(FlowAccount).where(FlowAccount.label == data["label"])
         if data.get("email"):
             exists_stmt = exists_stmt.where(FlowAccount.email == data["email"])

@@ -18,6 +18,8 @@ class FlowAccount(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     label: Mapped[str] = mapped_column(String(120), nullable=False)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    login_password: Mapped[str | None] = mapped_column(Text, nullable=True)
+    mail_api_url: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # __Secure-next-auth.session-token(ST,长期有效):用于 HTTP 换 ya29 AT
     session_token: Mapped[str | None] = mapped_column(Text, nullable=True)

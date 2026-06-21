@@ -20,6 +20,8 @@ def ensure_runtime_schema() -> None:
         "ALTER TABLE flow_accounts ADD COLUMN IF NOT EXISTS cookies_expires_at TIMESTAMP WITH TIME ZONE",
         "ALTER TABLE flow_accounts ADD COLUMN IF NOT EXISTS next_refresh_at TIMESTAMP WITH TIME ZONE",
         "ALTER TABLE flow_accounts ADD COLUMN IF NOT EXISTS auto_refresh_minutes INTEGER NOT NULL DEFAULT 50",
+        "ALTER TABLE flow_accounts ADD COLUMN IF NOT EXISTS login_password TEXT",
+        "ALTER TABLE flow_accounts ADD COLUMN IF NOT EXISTS mail_api_url TEXT",
     ]
     with sync_engine.begin() as conn:
         for statement in statements:
